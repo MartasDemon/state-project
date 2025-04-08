@@ -1,37 +1,55 @@
 import pygame
 
 class Stat:
-    def __init__(self, rozpocet, vydaje, dlh, dan, pop, inflacia):
+    def __init__(self, rozpocet, vydaje, dlh, dan, inflacia):
         self.rozpocet = rozpocet
         self.vydaje = vydaje
         self.dlh = dlh
         self.dan = dan 
-        self.pop = pop
         self.inflacia = inflacia
         self.output_text = ""
 
+        self.day = 1
+        self.month = 10   
+        self.year = 2023
+
+        self.populacia = 5000000
+        self.birthrate = 43000
+        self.deathrate = 42000
+
     def stav(self):
         self.output_text = (f'Narodny dlh: {self.dlh}€, Rozpočet: {self.rozpocet}€, '
-                            f'Vydaje: {self.vydaje}, Dan: {self.dan * 100}%, '
-                            f'Obyvatelia: {self.pop}, Inflacia: {self.inflacia}%')
+                            f'Vydaje: {self.vydaje}, Daň: {self.dan * 100}%, '
+                            f'Obyvatelia: {self.populacia}, Inflácia: {self.inflacia}%')
 
     def znizit_dane(self, percento):
         self.dan -= percento / 100
-        self.output_text = f'Nova dan je {self.dan * 100}%'
+        self.output_text = f'Nová daň je {self.dan * 100}%'
 
     def zvysit_dane(self, percento):
         self.dan += percento / 100
-        self.output_text = f'Nova dan je {self.dan * 100}%'
+        self.output_text = f'Nová daň je {self.dan * 100}%'
 
     def splatit_dlh(self, suma):
         if suma > self.rozpocet:
-            self.output_text = 'Nemame dost penazi'
+            self.output_text = 'Nemáme dosť peňazí'
         else:
             self.rozpocet -= suma
             self.dlh -= suma
-            self.output_text = f'Splatili ste {suma}€, zostavajuci dlh: {self.dlh}€'
+            self.output_text = f'Splatili ste {suma}€, zostávajúci dlh: {self.dlh}€'
             if self.dlh == 0:
-                self.output_text += '\nDlhy su splatene!'
+                self.output_text += '\nDlhy sú splatené!'
+    def zmena_populacie(self):
+        a = (self.birthrate - self.deathrate)
+        self.populacia = self.populacia + a
+
+    def dalsi_mesiac(self):
+        self.zmena_populacie()
+        self.month += 1
+        if self.month == 13:
+            self.month = 1
+            self.year += 1
+
 
 class Button:
     def __init__(self, x, y, width, height, text, color=(0, 0, 0)):
@@ -47,22 +65,22 @@ class Button:
     def check_click(self, pos):
         return self.rect.collidepoint(pos)
 
+
 pygame.init()
 screen = pygame.display.set_mode((1200, 720))
 pygame.display.set_caption("Economic Simulator")
 font = pygame.font.Font(None, 30)
 
-Slovensko = Stat(1000, 300, 200, 0.20, 500000, 2.8)
+Slovensko = Stat(1000, 300, 200, 0.20, 2.8)
 img = pygame.image.load('images/slovensko.png')
 img = pygame.transform.scale(img, (400, 350))
 
-
-
 buttons = {
-    "stav": Button(50, 375, 200, 50, "Skontrolovat stav"),
-    "znizit_dan": Button(50, 300, 200, 50, "Znižat dan"),
-    "zvysit_dan": Button(50, 225, 200, 50, "Zvýšit dan"),
-    "splatit_dlh": Button(50, 150, 200, 50, "Splatit dlh")
+    "stav": Button(50, 375, 200, 50, "Skontrolovať stav"),
+    "znizit_dan": Button(50, 300, 200, 50, "Znížiť daň"),
+    "zvysit_dan": Button(50, 225, 200, 50, "Zvýšiť daň"),
+    "splatit_dlh": Button(50, 150, 200, 50, "Splatit dlh"),
+    "dalsi_mesiac": Button(950, 650, 200, 50, "Ďalší mesiac")  # New button
 }
 
 input_active = None
@@ -76,7 +94,6 @@ while running:
         if event.type == pygame.QUIT:
             running = False
             
-        
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             if buttons["stav"].check_click(pos):
@@ -90,6 +107,9 @@ while running:
             if buttons["splatit_dlh"].check_click(pos):
                 input_active = "splatit_dlh"
                 input_text = ""
+            if buttons["dalsi_mesiac"].check_click(pos):  
+                Slovensko.dalsi_mesiac()
+
         if event.type == pygame.KEYDOWN and input_active:
             if event.key == pygame.K_RETURN:
                 try:
@@ -101,12 +121,13 @@ while running:
                     elif input_active == "splatit_dlh":
                         Slovensko.splatit_dlh(value)
                 except ValueError:
-                    Slovensko.output_text = "Zadajte platne cislo!"
+                    Slovensko.output_text = "Zadajte platné číslo!"
                 input_active = None
             elif event.key == pygame.K_BACKSPACE:
                 input_text = input_text[:-1]
             else:
                 input_text += event.unicode
+
     rect = img.get_rect()
     rect.center = 400, 150
     screen.blit(img, rect)
@@ -123,8 +144,10 @@ while running:
         screen.blit(input_text_surface, (310, 260))
         prompt_surface = font.render("Zadajte hodnotu:", True, (0, 0, 0))
         screen.blit(prompt_surface, (300, 220))
+
+    date_text = font.render(f'Dátum: {Slovensko.day}.{Slovensko.month}.{Slovensko.year}', True, (0, 0, 0))
+    screen.blit(date_text, (950, 20))
     
     pygame.display.flip()
 
 pygame.quit()
-
