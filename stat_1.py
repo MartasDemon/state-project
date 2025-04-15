@@ -16,6 +16,14 @@ class Stat:
         self.populacia = 5000000
         self.birthrate = 43000
         self.deathrate = 42000
+    
+        self.Ministerstva = {
+            "Hospodarstvo": 5555,
+            "Obranhy": 5555,
+            "Financi":  5555,
+            "Kultury": 5555,
+            "Zdravotnictvo": 0,
+        }
 
     def stav(self):
         self.output_text = (f'Narodny dlh: {self.dlh}€, Rozpočet: {self.rozpocet}€, '
