@@ -83,6 +83,14 @@ class Button:
     def check_click(self, pos):
         return self.rect.collidepoint(pos)
 
+class Radio:
+    def __init__(self):
+        self.playlist = ['Písnička 1', 'Písnička 2',]
+    
+    def pridaj_pesnicku(self, pesnicka):
+        self.pesnicka = pesnicka
+        self.playlist.append()
+
 pygame.init()
 screen = pygame.display.set_mode((1200, 720))
 pygame.display.set_caption("Economic Simulator")
@@ -98,12 +106,14 @@ buttons = {
     "zvysit_dan": Button(50, 225, 200, 50, "Zvýšiť daň"),
     "splatit_dlh": Button(50, 150, 200, 50, "Splatit dlh"),
     "dalsi_mesiac": Button(950, 650, 200, 50, "Ďalší mesiac"),
-    "ministerstva": Button(50, 650, 200, 50, "Ministerstvá")
+    "ministerstva": Button(50, 650, 200, 50, "Ministerstvá"),
+    "radio": Button(300, 650, 200, 50, "Radio")
 }
 
 input_active = None
 input_text = ""
 current_ministerstvo = None
+show_radio = False
 show_ministerstva = False
 running = True
 
@@ -127,6 +137,14 @@ while running:
                             current_ministerstvo = nazov
                             input_active = "ministerstvo"
                             input_text = ""
+            elif show_radio:
+                if 950 <= pos[0] <= 1150 and 650 <= pos[1] <= 700:
+                    show_radio = False
+                else:
+                    pass
+                    
+
+
             else:
                 if buttons["stav"].check_click(pos):
                     Slovensko.stav()
@@ -143,6 +161,8 @@ while running:
                     Slovensko.dalsi_mesiac()
                 if buttons["ministerstva"].check_click(pos):
                     show_ministerstva = True
+                if buttons["radio"].check_click(pos):
+                    show_radio = True
 
         if event.type == pygame.KEYDOWN and input_active:
             if event.key == pygame.K_RETURN:
@@ -176,12 +196,18 @@ while running:
             text = font.render(f"{nazov}: {hodnota} €", True, (0, 0, 0))
             screen.blit(text, (60, y + 7))
         Button(950, 650, 200, 50, "Späť").draw(screen, font)
+
+    elif show_radio:
+        screen.fill((255, 255, 255))
+        pygame.draw.rect(screen, (0, 0, 0), rect, 2, border_radius=5)
+        Button(950, 650, 200, 50, "Späť").draw(screen, font)
+
     else:
         rect = img.get_rect()
         rect.center = 400, 150
         screen.blit(img, rect)
 
-        for key in ["stav", "znizit_dan", "zvysit_dan", "splatit_dlh", "dalsi_mesiac", "ministerstva"]:
+        for key in ["stav", "znizit_dan", "zvysit_dan", "splatit_dlh", "dalsi_mesiac", "ministerstva","radio"]:
             buttons[key].draw(screen, font)
 
         text_surface = font.render(Slovensko.output_text, True, (0, 0, 0))
