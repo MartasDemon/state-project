@@ -18,11 +18,21 @@ class Stat:
         self.deathrate = 42000
     
         self.Ministerstva = {
-            "Hospodarstvo": 5555,
-            "Obranhy": 5555,
-            "Financi":  5555,
-            "Kultury": 5555,
-            "Zdravotnictvo": 0,
+            "MCRaS": 10000000,
+            "Dopravy": 100000000,
+            "Financii": 18000000,
+            "Hospodarstva": 23000000,
+            "MIRRI": 5200000,
+            "Kultury": 27000000,
+            "Obrany": 120000000,
+            "MPRV": 12500000,
+            "MPSVR": 630000000,
+            "Spravodlivosti": 23000000,
+            "MŠVVaM": 270000000,
+            "Vnútra": 122000000,
+            "Zachranicnych veci": 13200000,
+            "Zdravotnictva": 412000000,
+            "MZP": 17000000
         }
 
     def stav(self):
@@ -58,21 +68,20 @@ class Stat:
             self.month = 1
             self.year += 1
 
-
 class Button:
-    def __init__(self, x, y, width, height, text, color=(0, 0, 0)):
+    def __init__(self, x, y, width, height, text, color=(10, 10, 80)):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.color = color
 
     def draw(self, screen, font):
-        pygame.draw.rect(screen, self.color, self.rect)
-        text_surface = font.render(self.text, True, (255, 255, 255))  
-        screen.blit(text_surface, (self.rect.x + 10, self.rect.y + 10)) 
+        pygame.draw.rect(screen, self.color, self.rect, border_radius=10)
+        pygame.draw.rect(screen, (255, 255, 255), self.rect, 2, border_radius=10)
+        text_surface = font.render(self.text, True, (255, 255, 255))
+        screen.blit(text_surface, (self.rect.x + 10, self.rect.y + 10))
 
     def check_click(self, pos):
         return self.rect.collidepoint(pos)
-
 
 pygame.init()
 screen = pygame.display.set_mode((1200, 720))
@@ -88,35 +97,52 @@ buttons = {
     "znizit_dan": Button(50, 300, 200, 50, "Znížiť daň"),
     "zvysit_dan": Button(50, 225, 200, 50, "Zvýšiť daň"),
     "splatit_dlh": Button(50, 150, 200, 50, "Splatit dlh"),
-    "dalsi_mesiac": Button(950, 650, 200, 50, "Ďalší mesiac")  # New button
+    "dalsi_mesiac": Button(950, 650, 200, 50, "Ďalší mesiac"),
+    "ministerstva": Button(50, 650, 200, 50, "Ministerstvá")
 }
 
 input_active = None
 input_text = ""
+current_ministerstvo = None
+show_ministerstva = False
 running = True
 
 while running:
     screen.fill((255, 255, 255))
-    
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-            
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            if buttons["stav"].check_click(pos):
-                Slovensko.stav()
-            if buttons["znizit_dan"].check_click(pos):
-                input_active = "znizit_dan"
-                input_text = ""
-            if buttons["zvysit_dan"].check_click(pos):
-                input_active = "zvysit_dan"
-                input_text = ""
-            if buttons["splatit_dlh"].check_click(pos):
-                input_active = "splatit_dlh"
-                input_text = ""
-            if buttons["dalsi_mesiac"].check_click(pos):  
-                Slovensko.dalsi_mesiac()
+            if show_ministerstva:
+                if 950 <= pos[0] <= 1150 and 650 <= pos[1] <= 700:
+                    show_ministerstva = False
+                else:
+                    for i, (nazov, hodnota) in enumerate(Slovensko.Ministerstva.items()):
+                        y = 50 + i * 40
+                        rect = pygame.Rect(50, y, 500, 35)
+                        if rect.collidepoint(pos):
+                            current_ministerstvo = nazov
+                            input_active = "ministerstvo"
+                            input_text = ""
+            else:
+                if buttons["stav"].check_click(pos):
+                    Slovensko.stav()
+                if buttons["znizit_dan"].check_click(pos):
+                    input_active = "znizit_dan"
+                    input_text = ""
+                if buttons["zvysit_dan"].check_click(pos):
+                    input_active = "zvysit_dan"
+                    input_text = ""
+                if buttons["splatit_dlh"].check_click(pos):
+                    input_active = "splatit_dlh"
+                    input_text = ""
+                if buttons["dalsi_mesiac"].check_click(pos):  
+                    Slovensko.dalsi_mesiac()
+                if buttons["ministerstva"].check_click(pos):
+                    show_ministerstva = True
 
         if event.type == pygame.KEYDOWN and input_active:
             if event.key == pygame.K_RETURN:
@@ -128,24 +154,42 @@ while running:
                         Slovensko.zvysit_dane(value)
                     elif input_active == "splatit_dlh":
                         Slovensko.splatit_dlh(value)
+                    elif input_active == "ministerstvo" and current_ministerstvo:
+                        Slovensko.Ministerstva[current_ministerstvo] = value
+                        Slovensko.output_text = f"Nové výdavky pre {current_ministerstvo}: {value}€"
                 except ValueError:
                     Slovensko.output_text = "Zadajte platné číslo!"
                 input_active = None
+                current_ministerstvo = None
             elif event.key == pygame.K_BACKSPACE:
                 input_text = input_text[:-1]
             else:
                 input_text += event.unicode
 
-    rect = img.get_rect()
-    rect.center = 400, 150
-    screen.blit(img, rect)
-    
-    for button in buttons.values():
-        button.draw(screen, font)
-    
-    text_surface = font.render(Slovensko.output_text, True, (0, 0, 0))
-    screen.blit(text_surface, (50, 500))
-    
+    if show_ministerstva:
+        screen.fill((255, 255, 255))
+        for i, (nazov, hodnota) in enumerate(Slovensko.Ministerstva.items()):
+            y = 50 + i * 40
+            rect = pygame.Rect(50, y, 500, 35)
+            pygame.draw.rect(screen, (200, 200, 255), rect, border_radius=5)
+            pygame.draw.rect(screen, (0, 0, 0), rect, 2, border_radius=5)
+            text = font.render(f"{nazov}: {hodnota} €", True, (0, 0, 0))
+            screen.blit(text, (60, y + 7))
+        Button(950, 650, 200, 50, "Späť").draw(screen, font)
+    else:
+        rect = img.get_rect()
+        rect.center = 400, 150
+        screen.blit(img, rect)
+
+        for key in ["stav", "znizit_dan", "zvysit_dan", "splatit_dlh", "dalsi_mesiac", "ministerstva"]:
+            buttons[key].draw(screen, font)
+
+        text_surface = font.render(Slovensko.output_text, True, (0, 0, 0))
+        screen.blit(text_surface, (50, 500))
+
+        date_text = font.render(f'Dátum: {Slovensko.day}.{Slovensko.month}.{Slovensko.year}', True, (0, 0, 0))
+        screen.blit(date_text, (950, 20))
+
     if input_active:
         pygame.draw.rect(screen, (200, 200, 200), (300, 250, 200, 40))
         input_text_surface = font.render(input_text, True, (0, 0, 0))
@@ -153,9 +197,6 @@ while running:
         prompt_surface = font.render("Zadajte hodnotu:", True, (0, 0, 0))
         screen.blit(prompt_surface, (300, 220))
 
-    date_text = font.render(f'Dátum: {Slovensko.day}.{Slovensko.month}.{Slovensko.year}', True, (0, 0, 0))
-    screen.blit(date_text, (950, 20))
-    
     pygame.display.flip()
 
 pygame.quit()
